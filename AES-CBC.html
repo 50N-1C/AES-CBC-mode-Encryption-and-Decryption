@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Document</title>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+        // Encryption Function 
+        function encryptData(plainText, key) {
+        // Step 1: Generate a random 16-byte salt
+            const salt = CryptoJS.lib.WordArray.random(16);
+
+            // Step 2: Derive the encryption key using PBKDF2
+            const Key_Derivation = CryptoJS.PBKDF2(key, salt, {
+                keySize: 8, // 8 words = 32 bytes (256 bits)
+                iterations: 100,
+            });
+
+            // Step 3: Generate a random 16-byte IV
+            const iv = CryptoJS.lib.WordArray.random(16);
+
+            // Step 4: Encrypt the plaintext using AES-256-CBC
+            const encryption = CryptoJS.AES.encrypt(plainText, Key_Derivation, {
+                iv: iv,
+                padding: CryptoJS.pad.Pkcs7,
+                mode: CryptoJS.mode.CBC,
+            });
+
+            // Step 5: Concatenate salt, IV, and ciphertext, then encode in Base64
+            const encryptedData = CryptoJS.enc.Base64.stringify(salt.concat(iv).concat(encryption.ciphertext));
+
+            return encryptedData;
+        }
+
+        // Decryption Function
+        function decryptCipher(cipher, key) {
+            // Step 1: Decode the Base64 string into a WordArray
+            const decode = CryptoJS.enc.Base64.parse(cipher);
+
+            // Step 2: Extract the salt (first 16 bytes), IV (next 16 bytes), and ciphertext (remaining bytes)
+            const Extract_salt = CryptoJS.lib.WordArray.create(decode.words.slice(0, 4)); // Salt (16 bytes)
+            const Extract_iv = CryptoJS.lib.WordArray.create(decode.words.slice(4, 8)); // IV (16 bytes)
+            const ciphertext = CryptoJS.lib.WordArray.create(decode.words.slice(8)); // Ciphertext
+
+            // Step 3: Derive the key using PBKDF2 with the same salt and password
+            const new_key = CryptoJS.PBKDF2(key, Extract_salt, {
+                keySize: 8, // 8 words = 32 bytes (256 bits)
+                iterations: 100,
+            });
+
+            // Step 4: Decrypt the ciphertext using AES
+            const decryption = CryptoJS.AES.decrypt(
+                { ciphertext: ciphertext }, // Ciphertext as a CipherParams-like object
+                new_key, // Derived key
+                {
+                    iv: Extract_iv, // IV
+                    padding: CryptoJS.pad.Pkcs7, // Padding scheme
+                    mode: CryptoJS.mode.CBC, // Encryption mode
+                }
+            );
+
+            // Step 5: Convert the decrypted WordArray to a UTF-8 string
+            const plaintext = decryption.toString(CryptoJS.enc.Utf8);
+
+            return plaintext;
+        }
+
+        key = "Y.F.%.P.O.R.T.@.L.%.1.$.2.5.#";
+        // Example usage Encryption
+        plainText='{"param1":"Tue Jan 14 2025","param2":"Tue Jan 21 2025","param3":0,"param4":0,"param9":154378}';
+        console.log(encryptData(plainText, key));
+
+        // Example usage decryption
+        cipher = 'OhzL/Hp5dN6cYeiVmZdgLH77PYFgSvbWRJycWPiwod5urg5W9k8+1bRQ8Fy3q3tIcMYeoq5eX9gJ07QvEZB3SyzhWJN6/Oi0a7ReryCF545yVtaeHpjk9+ocs2LvVq2DjZVZkJkYIB1zHQUtrZkqJ3CQA2DXBfmhArrs4zV//uQ=';
+        console.log(decryptCipher(cipher,key));
+
+    </script>
+</body>
+</html>
