@@ -13,14 +13,14 @@
 
             // Step 2: Derive the encryption key using PBKDF2
             const Key_Derivation = CryptoJS.PBKDF2(key, salt, {
-                keySize: 8, // 8 words = 32 bytes (256 bits)
+                keySize: 8, // 8 words = 32 bytes
                 iterations: 100,
             });
 
             // Step 3: Generate a random 16-byte IV
             const iv = CryptoJS.lib.WordArray.random(16);
 
-            // Step 4: Encrypt the plaintext using AES-256-CBC
+            // Step 4: Encrypt the plaintext
             const encryption = CryptoJS.AES.encrypt(plainText, Key_Derivation, {
                 iv: iv,
                 padding: CryptoJS.pad.Pkcs7,
@@ -35,28 +35,28 @@
 
         // Decryption Function
         function decryptCipher(cipher, key) {
-            // Step 1: Decode the Base64 string into a WordArray
+            // Step 1: Decode the Base64 into WordArray
             const decode = CryptoJS.enc.Base64.parse(cipher);
 
-            // Step 2: Extract the salt (first 16 bytes), IV (next 16 bytes), and ciphertext (remaining bytes)
+            // Step 2: Extract the salt, IV, ciphertext
             const Extract_salt = CryptoJS.lib.WordArray.create(decode.words.slice(0, 4)); // Salt (16 bytes)
             const Extract_iv = CryptoJS.lib.WordArray.create(decode.words.slice(4, 8)); // IV (16 bytes)
             const ciphertext = CryptoJS.lib.WordArray.create(decode.words.slice(8)); // Ciphertext
 
             // Step 3: Derive the key using PBKDF2 with the same salt and password
             const new_key = CryptoJS.PBKDF2(key, Extract_salt, {
-                keySize: 8, // 8 words = 32 bytes (256 bits)
+                keySize: 8,
                 iterations: 100,
             });
 
-            // Step 4: Decrypt the ciphertext using AES
+            // Step 4: Decrypt ciphertext
             const decryption = CryptoJS.AES.decrypt(
-                { ciphertext: ciphertext }, // Ciphertext as a CipherParams-like object
-                new_key, // Derived key
+                { ciphertext: ciphertext }, 
+                new_key, 
                 {
-                    iv: Extract_iv, // IV
-                    padding: CryptoJS.pad.Pkcs7, // Padding scheme
-                    mode: CryptoJS.mode.CBC, // Encryption mode
+                    iv: Extract_iv, 
+                    padding: CryptoJS.pad.Pkcs7, 
+                    mode: CryptoJS.mode.CBC, 
                 }
             );
 
